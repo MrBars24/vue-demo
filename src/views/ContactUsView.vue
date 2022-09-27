@@ -11,6 +11,7 @@
         <h2>{{ age }}</h2>
       </div> -->
       <div>
+        <h2>Full name: {{ fullname }}</h2>
         <h2>First name: {{ person.firstname }}</h2>
         <h2>Last name: {{ person.lastname }}</h2>
         <h2>Age: {{ person.age }}</h2>
@@ -22,6 +23,7 @@
           <h3 v-if="person.course === 'BSEMC'">Bachelor of Science in Entertainment and Multimedia Computing</h3>
         </div>
         <div v-else>No course selected</div>
+        <h3>{{ label }}</h3>
       </div>
       <input type="text" v-model="person.firstname" placeholder="first name">
       <input type="text" v-model="person.lastname" placeholder="last name">
@@ -34,10 +36,11 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 
 // const page = "page name";
 const page = ref("page name");
+const label = ref();
 
 // const firstname = ref();
 // const lastname = ref();
@@ -50,6 +53,24 @@ const person = reactive({
 });
 
 const courses = ["ACT", "BSCS", "BSEMC", "BSIT"];
+
+const fullname = computed(() => {
+  return person.firstname + " " + person.lastname;
+});
+
+watch(() => person.age, (newValue, oldValue) => {
+  console.log(oldValue, newValue);
+  if (newValue > 18) {
+    label.value = "Not minor";
+  } else {
+    label.value = "Minor";
+  }
+})
+
+// lifecycle sample
+onMounted(() => {
+  console.log("mounted");
+});
 
 </script>
 
