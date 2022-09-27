@@ -52,7 +52,7 @@
         </div>
       </div>
     </Disclosure>
-    <main class="transition container px-8 mt-8">
+    <main class="transition px-8 py-8 w-full">
       <router-view/>
     </main>
   </div>

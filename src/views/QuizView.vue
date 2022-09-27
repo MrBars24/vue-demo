@@ -1,110 +1,140 @@
 <template>
-  <div class="flex items-center justify-center">
-    <div class="w-3/4">
-      <p class="heading-5">Lorem ipsum dolor sit amet consectetur adipisicing elit. Dignissimos expedita nostrum voluptates eveniet, repudiandae, provident ad explicabo, quasi libero tenetur unde natus rerum sed sint. Velit aperiam consequuntur aspernatur laudantium.</p>
-      <div class="w-full px-4 py-16">
-        <div class="mx-auto w-full max-w-md">
-          <RadioGroup v-model="selected">
-            <RadioGroupLabel class="sr-only">Server size</RadioGroupLabel>
-            <div class="space-y-2">
-              <RadioGroupOption
-                as="template"
-                v-for="plan in plans"
-                :key="plan.name"
-                :value="plan"
-                v-slot="{ active, checked }"
+  <div class="flex flex-col items-center justify-center">
+      <QuizQuestions ref="quizQuestions" v-for="q in questions" :key="q.id" :question="q" />
+      <div class="flex">
+        <BaseButton @click="checkAnswers">Submit Answers</BaseButton>
+      </div>
+  </div>
+
+  <TransitionRoot appear :show="isOpen" as="template">
+    <Dialog as="div" @close="closeModal" class="relative z-10">
+      <TransitionChild
+        as="template"
+        enter="duration-300 ease-out"
+        enter-from="opacity-0"
+        enter-to="opacity-100"
+        leave="duration-200 ease-in"
+        leave-from="opacity-100"
+        leave-to="opacity-0"
+      >
+        <div class="fixed inset-0 bg-black bg-opacity-25" />
+      </TransitionChild>
+
+      <div class="fixed inset-0 overflow-y-auto">
+        <div
+          class="flex min-h-full items-center justify-center p-4 text-center"
+        >
+          <TransitionChild
+            as="template"
+            enter="duration-300 ease-out"
+            enter-from="opacity-0 scale-95"
+            enter-to="opacity-100 scale-100"
+            leave="duration-200 ease-in"
+            leave-from="opacity-100 scale-100"
+            leave-to="opacity-0 scale-95"
+          >
+            <DialogPanel
+              class="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all"
+            >
+              <DialogTitle
+                as="h3"
+                class="text-lg font-medium leading-6 text-gray-900"
               >
-                <div
-                  :class="[
-                    active
-                      ? 'ring-2 ring-white ring-opacity-60 ring-offset-2 ring-offset-sky-300'
-                      : '',
-                    checked ? 'bg-sky-900 bg-opacity-75 text-white ' : 'bg-white ',
-                  ]"
-                  class="relative flex cursor-pointer rounded-lg px-5 py-4 shadow-md focus:outline-none"
+                You are done
+              </DialogTitle>
+              <div class="mt-2">
+                <p class="text-sm text-gray-500">
+                  Your score is {{ score }}.
+                </p>
+              </div>
+
+              <div class="mt-4">
+                <button
+                  type="button"
+                  class="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                  @click="closeModal"
                 >
-                  <div class="flex w-full items-center justify-between">
-                    <div class="flex items-center">
-                      <div class="text-sm">
-                        <RadioGroupLabel
-                          as="p"
-                          :class="checked ? 'text-white' : 'text-gray-900'"
-                          class="font-medium"
-                        >
-                          {{ plan.name }}
-                        </RadioGroupLabel>
-                        <RadioGroupDescription
-                          as="span"
-                          :class="checked ? 'text-sky-100' : 'text-gray-500'"
-                          class="inline"
-                        >
-                          <span> {{ plan.ram }}/{{ plan.cpus }}</span>
-                          <span aria-hidden="true"> &middot; </span>
-                          <span>{{ plan.disk }}</span>
-                        </RadioGroupDescription>
-                      </div>
-                    </div>
-                    <div v-show="checked" class="shrink-0 text-white">
-                      <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none">
-                        <circle
-                          cx="12"
-                          cy="12"
-                          r="12"
-                          fill="#fff"
-                          fill-opacity="0.2"
-                        />
-                        <path
-                          d="M7 13l3 3 7-7"
-                          stroke="#fff"
-                          stroke-width="1.5"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-              </RadioGroupOption>
-            </div>
-          </RadioGroup>
+                  Got it, thanks!
+                </button>
+              </div>
+            </DialogPanel>
+          </TransitionChild>
         </div>
       </div>
-    </div>
-  </div>
+    </Dialog>
+  </TransitionRoot>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import axios from "axios";
+import { onMounted, reactive, ref } from 'vue'
+import QuizQuestions from "../components/QuizQuestions.vue";
+import BaseButton from "../components/base/BaseButton.vue";
 import {
-  RadioGroup,
-  RadioGroupLabel,
-  RadioGroupDescription,
-  RadioGroupOption,
-} from '@headlessui/vue'
+  TransitionRoot,
+  TransitionChild,
+  Dialog,
+  DialogPanel,
+  DialogTitle,
+} from '@headlessui/vue';
 
-const plans = [
-  {
-    name: 'Startup',
-    ram: '12GB',
-    cpus: '6 CPUs',
-    disk: '160 GB SSD disk',
-  },
-  {
-    name: 'Business',
-    ram: '16GB',
-    cpus: '8 CPUs',
-    disk: '512 GB SSD disk',
-  },
-  {
-    name: 'Enterprise',
-    ram: '32GB',
-    cpus: '12 CPUs',
-    disk: '1024 GB SSD disk',
-  },
-]
+const questions = reactive({});
+const quizQuestions = ref(null);
 
-const selected = ref(plans[0])
+onMounted(() => {
+  getQuizes();
+});
 
+const isOpen = ref(false);
+const score = ref(0);
+
+const closeModal = () => {
+  isOpen.value = false;
+}
+const openModal = () => {
+  isOpen.value = true;
+}
+
+const getQuizes = async() => {
+  let quizes = await axios.get("https://quizapi.io/api/v1/questions", {
+    params: {
+      apiKey: 'mk9bljEpahMbhctyWWBLPXYl9EBVAnAfPYVgBabs',
+      limit: 5,
+    }
+  });
+
+  Object.assign(questions, quizes.data);
+};
+
+const checkAnswers = async () => {
+  let isFilled = await checkFilled();
+  let tmpScore = 0;
+
+  if (isFilled) { // check correct answers
+    for (let index = 0; index < Object.keys(questions).length; index++) {
+      let ans = quizQuestions.value[index].getAnswer();
+      let question = questions[index];
+      let answerKey = ans[question.id];
+      if (question.correct_answer === answerKey) {
+        tmpScore = tmpScore +  1;
+      }
+    }
+
+    score.value = tmpScore;
+    openModal();
+  }
+}
+
+const checkFilled = async() => {
+  const len = quizQuestions.value.length;
+  let filled = 0;
+  for (let index = 0; index < len; index++) {
+    if (Object.keys(quizQuestions.value[index].getAnswer()).length > 0) {
+      await filled++;
+    }
+  }
+  return len === filled;
+};
 </script>
 
 <style lang="scss" scoped>
