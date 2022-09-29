@@ -1,9 +1,37 @@
 <template>
-  <div class="flex flex-col items-center justify-center">
-      <QuizQuestions ref="quizQuestions" v-for="q in questions" :key="q.id" :question="q" />
-      <div class="flex">
-        <BaseButton @click="checkAnswers">Submit Answers</BaseButton>
+  <div v-if="loading" class="w-3/4 h-24 rounded-md mx-auto">
+    <div class="flex animate-pulse flex-col space-x-5">
+      <div class="w-full flex flex-col space-y-5">
+        <div class="w-full bg-gray-300 h-6 rounded-md ">
+        </div>
+        <div class="mt-10 w-1/2 mx-auto bg-gray-300 h-10 rounded-md ">
+        </div>
+        <div class="w-1/2 mx-auto bg-gray-300 h-10 rounded-md ">
+        </div>
+        <div class="w-1/2 mx-auto bg-gray-300 h-10 rounded-md ">
+        </div>
+        <div class="w-1/2 mx-auto bg-gray-300 h-10 rounded-md ">
+        </div>
       </div>
+      <div class="w-full flex flex-col mt-10 space-y-5">
+        <div class="w-full bg-gray-300 h-6 rounded-md ">
+        </div>
+        <div class="mt-10 w-1/2 mx-auto bg-gray-300 h-10 rounded-md ">
+        </div>
+        <div class="w-1/2 mx-auto bg-gray-300 h-10 rounded-md ">
+        </div>
+        <div class="w-1/2 mx-auto bg-gray-300 h-10 rounded-md ">
+        </div>
+        <div class="w-1/2 mx-auto bg-gray-300 h-10 rounded-md ">
+        </div>
+      </div>
+    </div>
+  </div>
+  <div v-else class="flex flex-col items-center justify-center">
+    <QuizQuestions ref="quizQuestions" v-for="q in questions" :key="q.id" :question="q" />
+    <div class="flex">
+      <BaseButton @click="checkAnswers">Submit Answers</BaseButton>
+    </div>
   </div>
 
   <TransitionRoot appear :show="isOpen" as="template">
@@ -87,6 +115,7 @@ onMounted(() => {
 
 const isOpen = ref(false);
 const score = ref(0);
+const loading = ref(false);
 
 const closeModal = () => {
   isOpen.value = false;
@@ -96,6 +125,7 @@ const openModal = () => {
 }
 
 const getQuizes = async() => {
+  loading.value = true;
   let quizes = await axios.get("https://quizapi.io/api/v1/questions", {
     params: {
       apiKey: 'mk9bljEpahMbhctyWWBLPXYl9EBVAnAfPYVgBabs',
@@ -103,6 +133,7 @@ const getQuizes = async() => {
     }
   });
 
+  loading.value = false;
   Object.assign(questions, quizes.data);
 };
 
